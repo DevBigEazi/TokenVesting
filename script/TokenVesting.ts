@@ -36,17 +36,31 @@ async function main() {
     DEPLOYED_FACTORY_CONTRACT
   );
 
+  console.log("###### Minting token to the contract address ######");
+  const mintTokenToContract = await dthToken
+    .connect(signer1)
+    .mint(
+      tokenVestingContractInstance.getAddress(),
+      hre.ethers.parseUnits("20000000", 18)
+    );
+
+  mintTokenToContract.wait();
+
+  console.log(mintTokenToContract);
+
   console.log(
     "######  Adding a beneficiary to the `TokenVesting` contract with a vesting schedule ######"
   );
 
-  const startTime = await time.latest(); // Assume `startTime` is a timestamp
-  const duration = await time.increaseTo(startTime + 60 * 60 * 24 * 30);
+  const startTime = await time.latest();
+  const duration = startTime + 60 - startTime;
   const totalAmount = hre.ethers.parseUnits("100000", 18);
+
+  await time.increaseTo(startTime + 60);
 
   const addBeneficiary = await tokenVestingContractInstance
     .connect(signer1)
-    .addBeneficiary(signer2, duration, totalAmount);
+    .addBeneficiary(signer3, startTime, duration, totalAmount);
 
   addBeneficiary.wait();
   console.log(addBeneficiary);
@@ -55,8 +69,10 @@ async function main() {
     "##### Claim vested tokens for the beneficiary after advancing time #####"
   );
 
+  await time.increaseTo(startTime + 4000);
+
   const claimVestedToken = await tokenVestingContractInstance
-    .connect(signer2)
+    .connect(signer4)
     .claimTokens();
 
   claimVestedToken.wait();
